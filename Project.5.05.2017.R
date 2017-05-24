@@ -14,7 +14,7 @@ library(stringi)
 library(xlsx)
 library(shiny)
 
-DIR <- 'C:\\Users\\eren\\Desktop\\WebminingProject\\'
+DIR <- 'C:\\Users\\lenovo\\Desktop\\displaying_turkey_election_2017_result_in_r-master\\'
 setwd(DIR)
 #Functions################################################
 #1. Function for transform numbers to factor as levelling
@@ -76,6 +76,8 @@ election.table[,9] <- as.double(election.table[,9])
 election.table[,10] <- gsub(",",".",election.table[,10])
 election.table[,10] <- as.double(election.table[,10])
 
+election.table[,13] <- as.factor(election.table[,13])
+
 #YALOVA Evet.Sayisi is NA (FIXING CODES)
 election.table[79,6]
 election.table[79,6] <- election.table[79,4] - election.table[79,8]
@@ -101,7 +103,11 @@ region.table <- htmltab(doc = region.url, which = "//*[@id='post-4045']/div/tabl
 Encoding(region.table$Ad) <- "UTF-8"
 colnames(region.table)[8] <- "Bolge"
 Encoding(region.table$Bolge) <- "UTF-8"
-region.table <- region.table[order(region.table$Ad),]                              
+region.table <- region.table[order(region.table$Ad),]   
+
+#Reading Election Table
+election.table <- read_excel("C:\\Users\\lenovo\\Desktop\\displaying_turkey_election_2017_result_in_r-master\\election.xlsx")
+View(election.table)
 
 #Concating Tables
 election.table$Bolge <- region.table$Bolge
@@ -144,7 +150,12 @@ href_list
   temp_district_Data <- data.frame(city_name,district_name_data,district_yes_data,district_no_data)
   province_district_frame <<- rbind(province_district_frame,temp_district_Data)
   Sys.sleep(2)
-  }
+}
+
+#Reading District Table
+province_district_frame <- read_excel("C:\\Users\\lenovo\\Desktop\\displaying_turkey_election_2017_result_in_r-master\\district.xlsx")
+View(province_district_frame)
+
   
 colnames(province_district_frame) <- c("Sehir","Ilce","Evet.Orani", "Hayir.Orani")
 
@@ -167,6 +178,13 @@ while(i <= nrow(unique_region_name)) {
   i=i+1
 }
 region_list
+
+region_list
+d <- c()
+for(i in region_list){
+  d <- c(d,i)
+}
+d
 
 unique_city_name <- subset(province_district_frame, !duplicated(Sehir))
 city_list<-c()
@@ -266,7 +284,7 @@ showDistrictResultInGGPlot <- function(City){
   district_plot + geom_point() + geom_label(aes(label=Ilce))
   
 }
-showDistrictResultInGGPlot("Eskiþehir") #Sample
+showDistrictResultInGGPlot("Ankara") #Sample
 
 #GGMap Operations
 #1. General
@@ -315,22 +333,24 @@ showCitiesInRegionInGGMAP <- function(region){
                                                             data = temp_region_frame, colour = I("white"))
   
 }
-showCitiesInRegionInGGMAP("Ýç Anadolu Bölgesi") #Sample
+showCitiesInRegionInGGMAP("Marmara Bölgesi") #Sample
 
 #4. Most Voted Yes People
 take_turkey_map = get_map(location = c(lon =  35.24332, lat = 38.96375), 
                           zoom = 5, maptype = 'hybrid', source = "google")
 turkey_map = ggmap(take_turkey_map)
 turkey_map + geom_point(aes(x = lon, y = lat, colour = Evet.Kullanan.Kitle), data = election.table,
-                        alpha = .5, size = 5) + geom_text(aes(x = lon, y = lat, label = Sehir),
-                                                          data = election.table, colour = I("white"))
+                        alpha = .5, size = 5)
+# + geom_text(aes(x = lon, y = lat, label = Sehir), data = election.table, colour = I("white"))
+# Hayir Kullanan Kitle Için Renk Kodlari
+ccolors = c("#ff0000","#ffcccc","#ff6666","#b30000")
 
 #4. Most Voted No People
 take_turkey_map = get_map(location = c(lon =  35.24332, lat = 38.96375), 
                           zoom = 5, maptype = 'hybrid', source = "google")
 turkey_map = ggmap(take_turkey_map)
 turkey_map + geom_point(aes(x = lon, y = lat, colour = Hayir.Kullanan.Kitle), data = election.table,
-                        alpha = .5, size = 5)
+                        alpha = .5, size = 5) + scale_colour_manual(values = ccolors)
 
 
 
